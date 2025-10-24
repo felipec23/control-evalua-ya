@@ -19,6 +19,7 @@ serve(async (req) => {
     console.log(`Processing CV for: ${candidateName}`);
 
     // Step 1: Extract information from CV
+    // Using PDF format with Gemini Flash which supports document processing
     const extractionPrompt = `Analiza esta hoja de vida en PDF y extrae la siguiente información en formato JSON:
 
 1. Lista de experiencias laborales con:
@@ -35,7 +36,11 @@ serve(async (req) => {
    - Área de estudio
    - Año de finalización
 
-Devuelve solo el JSON sin explicaciones adicionales.`;
+Devuelve solo el JSON sin explicaciones adicionales. El formato debe ser:
+{
+  "experiencias": [{"cargo": "...", "empresa": "...", "fechaInicio": "MM/AAAA", "fechaFin": "MM/AAAA", "descripcion": "...", "duracionMeses": 0}],
+  "posgrados": [{"titulo": "...", "institucion": "...", "area": "...", "anoFinalizacion": 0}]
+}`;
 
     const extractionResponse = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -46,7 +51,7 @@ Devuelve solo el JSON sin explicaciones adicionales.`;
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-pro",
           messages: [
             {
               role: "user",
@@ -65,6 +70,13 @@ Devuelve solo el JSON sin explicaciones adicionales.`;
 
     const extractionData = await extractionResponse.json();
     console.log("Extraction response:", extractionData);
+    
+    // Check for errors in the AI response
+    if (extractionData.error || !extractionData.choices || extractionData.choices.length === 0) {
+      const errorMsg = extractionData.error?.message || "No response from AI model";
+      console.error("AI extraction error:", errorMsg);
+      throw new Error(`Failed to extract CV data: ${errorMsg}`);
+    }
     
     const extractedText = extractionData.choices[0].message.content;
     let extraction;
@@ -110,7 +122,7 @@ Devuelve un JSON con: { "mesesExperiencia": número, "cumpleRequisito": booleano
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-pro",
           messages: [
             { role: "user", content: experienceEvalPrompt },
           ],
@@ -119,6 +131,14 @@ Devuelve un JSON con: { "mesesExperiencia": número, "cumpleRequisito": booleano
     );
 
     const experienceData = await experienceResponse.json();
+    
+    // Check for errors in the AI response
+    if (experienceData.error || !experienceData.choices || experienceData.choices.length === 0) {
+      const errorMsg = experienceData.error?.message || "No response from AI model";
+      console.error("AI experience evaluation error:", errorMsg);
+      throw new Error(`Failed to evaluate experience: ${errorMsg}`);
+    }
+    
     const experienceText = experienceData.choices[0].message.content;
     let experienceEval;
     try {
@@ -160,7 +180,7 @@ Devuelve un JSON con: { "pertinencia": número (0-100), "explicacion": "texto" }
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "google/gemini-2.5-pro",
           messages: [
             { role: "user", content: postgraduateEvalPrompt },
           ],
@@ -169,6 +189,14 @@ Devuelve un JSON con: { "pertinencia": número (0-100), "explicacion": "texto" }
     );
 
     const postgraduateData = await postgraduateResponse.json();
+    
+    // Check for errors in the AI response
+    if (postgraduateData.error || !postgraduateData.choices || postgraduateData.choices.length === 0) {
+      const errorMsg = postgraduateData.error?.message || "No response from AI model";
+      console.error("AI postgraduate evaluation error:", errorMsg);
+      throw new Error(`Failed to evaluate postgraduate: ${errorMsg}`);
+    }
+    
     const postgraduateText = postgraduateData.choices[0].message.content;
     let postgraduateEval;
     try {
