@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, CheckCircle2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 interface Candidate {
   id: string;
@@ -45,31 +46,40 @@ export const Step4Processing = ({
     }
 
     const candidate = candidates[currentIndex];
-    
+
     try {
       // Convert PDF to base64
       const reader = new FileReader();
       reader.onload = async (e) => {
         const base64 = e.target?.result as string;
-        
-        // Call edge function to process CV
-        const { data, error } = await supabase.functions.invoke("process-cv", {
-          body: {
+
+        // Call API to process CV
+        const response = await fetch(`${API_URL}/api/process-cv`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
             candidateName: candidate.name,
             pdfBase64: base64.split(",")[1],
             requiredMonths,
-          },
+          }),
         });
 
-        if (error) {
+        if (!response.ok) {
+          const error = await response.json();
           console.error("Error processing CV:", error);
           toast({
             title: "Error",
-            description: `Error procesando HV de ${candidate.name}`,
+            description: `Error procesando HV de ${candidate.name}: ${
+              error.error || "Unknown error"
+            }`,
             variant: "destructive",
           });
           return;
         }
+
+        const data = await response.json();
 
         const newResult: ProcessingResult = {
           candidateName: candidate.name,
@@ -82,7 +92,7 @@ export const Step4Processing = ({
         setResults((prev) => [...prev, newResult]);
         setCurrentIndex((prev) => prev + 1);
       };
-      
+
       reader.readAsDataURL(candidate.file);
     } catch (error) {
       console.error("Error:", error);

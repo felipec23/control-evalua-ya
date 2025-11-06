@@ -6,8 +6,18 @@ import {
   AlertCircle,
   Download,
   FileText,
+  ChevronDown,
+  Calculator,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 
 interface ProcessingResult {
   candidateName: string;
@@ -29,22 +39,60 @@ interface Step5ResultsProps {
   evaluationData: EvaluationData;
 }
 
-export const Step5Results = ({ results, evaluationData }: Step5ResultsProps) => {
+export const Step5Results = ({
+  results,
+  evaluationData,
+}: Step5ResultsProps) => {
   const calculateCriteria = (result: ProcessingResult) => {
     const legalidad = evaluationData.evaluationScore;
     const razonabilidad = result.experienceMeets ? 100 : 0;
     const controlJudicial =
-      evaluationData.evaluationScore * 0.5 +
-      result.postgraduateRelevance * 0.5;
+      evaluationData.evaluationScore * 0.5 + result.postgraduateRelevance * 0.5;
     const motivacion =
       (result.experienceMeets ? 100 : 0) * 0.5 +
       result.postgraduateRelevance * 0.5;
 
     return {
-      legalidad,
-      razonabilidad,
-      controlJudicial,
-      motivacion,
+      legalidad: {
+        score: legalidad,
+        breakdown: {
+          evaluationScore: evaluationData.evaluationScore,
+          description: "Basado en el tipo de evaluación seleccionado",
+        },
+      },
+      razonabilidad: {
+        score: razonabilidad,
+        breakdown: {
+          experienceMeets: result.experienceMeets,
+          experienceMonths: result.experienceMonths,
+          requiredMonths: evaluationData.requiredMonths,
+          description: result.experienceMeets
+            ? `El candidato cumple con los ${evaluationData.requiredMonths} meses requeridos (tiene ${result.experienceMonths} meses)`
+            : `El candidato NO cumple con los ${evaluationData.requiredMonths} meses requeridos (tiene ${result.experienceMonths} meses)`,
+        },
+      },
+      controlJudicial: {
+        score: controlJudicial,
+        breakdown: {
+          evaluationComponent: evaluationData.evaluationScore * 0.5,
+          postgraduateComponent: result.postgraduateRelevance * 0.5,
+          formula: `(${evaluationData.evaluationScore} × 50%) + (${result.postgraduateRelevance} × 50%)`,
+          description:
+            "Combinación de tipo de evaluación y pertinencia del posgrado",
+        },
+      },
+      motivacion: {
+        score: motivacion,
+        breakdown: {
+          experienceComponent: (result.experienceMeets ? 100 : 0) * 0.5,
+          postgraduateComponent: result.postgraduateRelevance * 0.5,
+          formula: `(${result.experienceMeets ? 100 : 0} × 50%) + (${
+            result.postgraduateRelevance
+          } × 50%)`,
+          description:
+            "Combinación de cumplimiento de experiencia y pertinencia del posgrado",
+        },
+      },
       promedio: (legalidad + razonabilidad + controlJudicial + motivacion) / 4,
     };
   };
@@ -77,7 +125,9 @@ export const Step5Results = ({ results, evaluationData }: Step5ResultsProps) => 
             <span className="font-medium">{evaluationData.category}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Experiencia requerida:</span>
+            <span className="text-muted-foreground">
+              Experiencia requerida:
+            </span>
             <span className="font-medium">
               {evaluationData.requiredMonths} meses
             </span>
@@ -110,10 +160,66 @@ export const Step5Results = ({ results, evaluationData }: Step5ResultsProps) => 
                         {criteria.promedio.toFixed(1)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Promedio General
+                        Puntuación sobre 100
                       </p>
                     </div>
                   </div>
+
+                  {/* Resultado Final */}
+                  <Card
+                    className={cn(
+                      "p-4 border-2",
+                      criteria.promedio >= 70
+                        ? "bg-accent/10 border-accent"
+                        : "bg-destructive/10 border-destructive"
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      {criteria.promedio >= 70 ? (
+                        <CheckCircle2 className="h-6 w-6 text-accent flex-shrink-0 mt-1" />
+                      ) : (
+                        <XCircle className="h-6 w-6 text-destructive flex-shrink-0 mt-1" />
+                      )}
+                      <div className="space-y-2">
+                        <h4 className="font-bold text-lg">
+                          {criteria.promedio >= 70
+                            ? "✓ Cumple con los límites jurisprudenciales"
+                            : "✗ No cumple con los límites jurisprudenciales"}
+                        </h4>
+                        <p className="text-sm leading-relaxed">
+                          {criteria.promedio >= 70 ? (
+                            <>
+                              Si el candidato elegido cumple con los criterios
+                              de mérito, su nombramiento cumple con los límites
+                              jurisprudenciales a la discrecionalidad:{" "}
+                              <strong>Legalidad</strong>, que impide el uso
+                              arbitrario del poder público.{" "}
+                              <strong>Razonabilidad</strong>, que requiere
+                              proporcionalidad entre medios y resultados.{" "}
+                              <strong>Motivación</strong>, como obligación
+                              formal y esencial para la certidumbre del acto. Y{" "}
+                              <strong>Control judicial</strong>, que certifica
+                              el estudio de las decisiones discrecionales.
+                            </>
+                          ) : (
+                            <>
+                              Si el candidato elegido no cumple con los
+                              criterios de mérito, su nombramiento excede los
+                              límites de facultad discrecional, es decir, se
+                              está permitiendo la arbitrariedad en esta decisión
+                              de la autoridad del ente territorial, en razón a
+                              que no se cumplen los postulados de legalidad y
+                              fundamentación que corresponden a la dimensión
+                              administrativa; los postulados del debido proceso
+                              y principio de proporcionalidad que componen la
+                              Dimensión de proporcionalidad; y el postulado del
+                              precedente en las decisiones judiciales.
+                            </>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-1">
@@ -122,13 +228,18 @@ export const Step5Results = ({ results, evaluationData }: Step5ResultsProps) => 
                         <span
                           className={cn(
                             "text-2xl font-bold",
-                            getScoreColor(criteria.legalidad)
+                            getScoreColor(criteria.legalidad.score)
                           )}
                         >
-                          {criteria.legalidad}
+                          {criteria.legalidad.score}
                         </span>
-                        <span className={getScoreColor(criteria.legalidad)}>
-                          {getScoreIcon(criteria.legalidad)}
+                        <span className="text-xs text-muted-foreground">
+                          /100
+                        </span>
+                        <span
+                          className={getScoreColor(criteria.legalidad.score)}
+                        >
+                          {getScoreIcon(criteria.legalidad.score)}
                         </span>
                       </div>
                     </div>
@@ -141,13 +252,20 @@ export const Step5Results = ({ results, evaluationData }: Step5ResultsProps) => 
                         <span
                           className={cn(
                             "text-2xl font-bold",
-                            getScoreColor(criteria.razonabilidad)
+                            getScoreColor(criteria.razonabilidad.score)
                           )}
                         >
-                          {criteria.razonabilidad}
+                          {criteria.razonabilidad.score}
                         </span>
-                        <span className={getScoreColor(criteria.razonabilidad)}>
-                          {getScoreIcon(criteria.razonabilidad)}
+                        <span className="text-xs text-muted-foreground">
+                          /100
+                        </span>
+                        <span
+                          className={getScoreColor(
+                            criteria.razonabilidad.score
+                          )}
+                        >
+                          {getScoreIcon(criteria.razonabilidad.score)}
                         </span>
                       </div>
                     </div>
@@ -160,47 +278,355 @@ export const Step5Results = ({ results, evaluationData }: Step5ResultsProps) => 
                         <span
                           className={cn(
                             "text-2xl font-bold",
-                            getScoreColor(criteria.controlJudicial)
+                            getScoreColor(criteria.controlJudicial.score)
                           )}
                         >
-                          {criteria.controlJudicial.toFixed(1)}
+                          {criteria.controlJudicial.score.toFixed(1)}
                         </span>
-                        <span className={getScoreColor(criteria.controlJudicial)}>
-                          {getScoreIcon(criteria.controlJudicial)}
+                        <span className="text-xs text-muted-foreground">
+                          /100
+                        </span>
+                        <span
+                          className={getScoreColor(
+                            criteria.controlJudicial.score
+                          )}
+                        >
+                          {getScoreIcon(criteria.controlJudicial.score)}
                         </span>
                       </div>
                     </div>
 
                     <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">Motivación</p>
+                      <p className="text-xs text-muted-foreground">
+                        Motivación
+                      </p>
                       <div className="flex items-center gap-2">
                         <span
                           className={cn(
                             "text-2xl font-bold",
-                            getScoreColor(criteria.motivacion)
+                            getScoreColor(criteria.motivacion.score)
                           )}
                         >
-                          {criteria.motivacion.toFixed(1)}
+                          {criteria.motivacion.score.toFixed(1)}
                         </span>
-                        <span className={getScoreColor(criteria.motivacion)}>
-                          {getScoreIcon(criteria.motivacion)}
+                        <span className="text-xs text-muted-foreground">
+                          /100
+                        </span>
+                        <span
+                          className={getScoreColor(criteria.motivacion.score)}
+                        >
+                          {getScoreIcon(criteria.motivacion.score)}
                         </span>
                       </div>
                     </div>
                   </div>
 
+                  {/* AI Scoring Logic Breakdown */}
                   <div className="pt-4 border-t border-border">
-                    <details className="group">
-                      <summary className="cursor-pointer text-sm font-medium text-primary flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Ver detalles de la extracción
-                      </summary>
-                      <div className="mt-3 p-4 bg-muted rounded-lg">
-                        <pre className="text-xs overflow-auto">
-                          {JSON.stringify(result.rawExtraction, null, 2)}
-                        </pre>
-                      </div>
-                    </details>
+                    <Accordion type="single" collapsible className="w-full">
+                      <AccordionItem
+                        value="scoring-logic"
+                        className="border-none"
+                      >
+                        <AccordionTrigger className="text-sm font-medium text-primary hover:no-underline py-2">
+                          <div className="flex items-center gap-2">
+                            <Brain className="h-4 w-4" />
+                            Ver lógica de puntuación de la IA
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-4 pt-2">
+                            {/* Legalidad Breakdown */}
+                            <Card className="p-4 bg-muted/30">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Calculator className="h-4 w-4 text-primary" />
+                                  <h4 className="font-semibold">Legalidad</h4>
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "font-bold",
+                                    getScoreColor(criteria.legalidad.score)
+                                  )}
+                                >
+                                  {criteria.legalidad.score}/100
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {criteria.legalidad.breakdown.description}
+                              </p>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between p-2 bg-background/50 rounded text-xs">
+                                  <span className="text-muted-foreground">
+                                    Evaluación de competencias:
+                                  </span>
+                                  <span className="font-mono font-semibold">
+                                    {
+                                      criteria.legalidad.breakdown
+                                        .evaluationScore
+                                    }
+                                    /100 (100%)
+                                  </span>
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-border/50">
+                                  <p className="text-xs text-muted-foreground">
+                                    <strong>Fórmula:</strong> Evaluación de
+                                    competencias (100%)
+                                  </p>
+                                </div>
+                              </div>
+                            </Card>
+
+                            {/* Razonabilidad Breakdown */}
+                            <Card className="p-4 bg-muted/30">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Calculator className="h-4 w-4 text-primary" />
+                                  <h4 className="font-semibold">
+                                    Razonabilidad
+                                  </h4>
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "font-bold",
+                                    getScoreColor(criteria.razonabilidad.score)
+                                  )}
+                                >
+                                  {criteria.razonabilidad.score}/100
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {criteria.razonabilidad.breakdown.description}
+                              </p>
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between p-2 bg-background/50 rounded text-xs">
+                                  <span className="text-muted-foreground">
+                                    Cumplimiento de experiencia:
+                                  </span>
+                                  <span className="font-mono font-semibold">
+                                    {criteria.razonabilidad.score}/100 (100%)
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                                  <div className="flex flex-col gap-1 p-2 bg-background/30 rounded">
+                                    <span className="text-muted-foreground">
+                                      Experiencia del candidato:
+                                    </span>
+                                    <span className="font-mono font-semibold">
+                                      {
+                                        criteria.razonabilidad.breakdown
+                                          .experienceMonths
+                                      }{" "}
+                                      meses
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col gap-1 p-2 bg-background/30 rounded">
+                                    <span className="text-muted-foreground">
+                                      Requerido:
+                                    </span>
+                                    <span className="font-mono font-semibold">
+                                      {
+                                        criteria.razonabilidad.breakdown
+                                          .requiredMonths
+                                      }{" "}
+                                      meses
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-border/50">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="text-muted-foreground">
+                                      Cumple requisito:
+                                    </span>
+                                    {criteria.razonabilidad.breakdown
+                                      .experienceMeets ? (
+                                      <Badge
+                                        variant="default"
+                                        className="bg-accent"
+                                      >
+                                        Sí = 100/100
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="destructive">
+                                        No = 0/100
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-muted-foreground mt-2">
+                                    <strong>Fórmula:</strong> Cumplimiento de
+                                    tiempo de experiencia (100%)
+                                  </p>
+                                </div>
+                              </div>
+                            </Card>
+
+                            {/* Control Judicial Breakdown */}
+                            <Card className="p-4 bg-muted/30">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Calculator className="h-4 w-4 text-primary" />
+                                  <h4 className="font-semibold">
+                                    Control Judicial
+                                  </h4>
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "font-bold",
+                                    getScoreColor(
+                                      criteria.controlJudicial.score
+                                    )
+                                  )}
+                                >
+                                  {criteria.controlJudicial.score.toFixed(1)}
+                                  /100
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {criteria.controlJudicial.breakdown.description}
+                              </p>
+                              <div className="space-y-2 text-xs">
+                                <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                                  <span className="text-muted-foreground">
+                                    Evaluación de competencias (50%):
+                                  </span>
+                                  <span className="font-mono font-semibold">
+                                    {evaluationData.evaluationScore}/100 →{" "}
+                                    {criteria.controlJudicial.breakdown.evaluationComponent.toFixed(
+                                      1
+                                    )}
+                                    /50
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                                  <span className="text-muted-foreground">
+                                    Pertinencia del posgrado (50%):
+                                  </span>
+                                  <span className="font-mono font-semibold">
+                                    {result.postgraduateRelevance}/100 →{" "}
+                                    {criteria.controlJudicial.breakdown.postgraduateComponent.toFixed(
+                                      1
+                                    )}
+                                    /50
+                                  </span>
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-border/50">
+                                  <p className="text-muted-foreground mb-1">
+                                    <strong>Fórmula:</strong>
+                                  </p>
+                                  <p className="font-mono text-xs p-2 bg-background rounded">
+                                    ({evaluationData.evaluationScore} × 50%) + (
+                                    {result.postgraduateRelevance} × 50%) ={" "}
+                                    {criteria.controlJudicial.score.toFixed(1)}
+                                    /100
+                                  </p>
+                                </div>
+                              </div>
+                            </Card>
+
+                            {/* Motivación Breakdown */}
+                            <Card className="p-4 bg-muted/30">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="flex items-center gap-2">
+                                  <Calculator className="h-4 w-4 text-primary" />
+                                  <h4 className="font-semibold">Motivación</h4>
+                                </div>
+                                <Badge
+                                  variant="outline"
+                                  className={cn(
+                                    "font-bold",
+                                    getScoreColor(criteria.motivacion.score)
+                                  )}
+                                >
+                                  {criteria.motivacion.score.toFixed(1)}/100
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground mb-3">
+                                {criteria.motivacion.breakdown.description}
+                              </p>
+                              <div className="space-y-2 text-xs">
+                                <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                                  <span className="text-muted-foreground">
+                                    Cumplimiento de experiencia (50%):
+                                  </span>
+                                  <span className="font-mono font-semibold">
+                                    {result.experienceMeets ? 100 : 0}/100 →{" "}
+                                    {criteria.motivacion.breakdown.experienceComponent.toFixed(
+                                      1
+                                    )}
+                                    /50
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between p-2 bg-background/50 rounded">
+                                  <span className="text-muted-foreground">
+                                    Pertinencia del posgrado (50%):
+                                  </span>
+                                  <span className="font-mono font-semibold">
+                                    {result.postgraduateRelevance}/100 →{" "}
+                                    {criteria.motivacion.breakdown.postgraduateComponent.toFixed(
+                                      1
+                                    )}
+                                    /50
+                                  </span>
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-border/50">
+                                  <p className="text-muted-foreground mb-1">
+                                    <strong>Fórmula:</strong>
+                                  </p>
+                                  <p className="font-mono text-xs p-2 bg-background rounded">
+                                    ({result.experienceMeets ? 100 : 0} × 50%) +
+                                    ({result.postgraduateRelevance} × 50%) ={" "}
+                                    {criteria.motivacion.score.toFixed(1)}/100
+                                  </p>
+                                </div>
+                              </div>
+                            </Card>
+
+                            {/* AI Analysis from extraction */}
+                            <Card className="p-4 bg-primary/5 border-primary/20">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Brain className="h-5 w-5 text-primary" />
+                                <h4 className="font-semibold text-primary">
+                                  Análisis de la IA
+                                </h4>
+                              </div>
+                              <div className="space-y-3 text-sm">
+                                {result.rawExtraction?.experienceEval
+                                  ?.explicacion && (
+                                  <div>
+                                    <p className="font-medium text-muted-foreground mb-1">
+                                      Experiencia:
+                                    </p>
+                                    <p className="text-foreground">
+                                      {
+                                        result.rawExtraction.experienceEval
+                                          .explicacion
+                                      }
+                                    </p>
+                                  </div>
+                                )}
+                                {result.rawExtraction?.postgraduateEval
+                                  ?.explicacion && (
+                                  <div>
+                                    <p className="font-medium text-muted-foreground mb-1">
+                                      Posgrado:
+                                    </p>
+                                    <p className="text-foreground">
+                                      {
+                                        result.rawExtraction.postgraduateEval
+                                          .explicacion
+                                      }
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            </Card>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   </div>
                 </div>
               </Card>

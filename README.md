@@ -1,53 +1,113 @@
-# Welcome to your Lovable project
+# Control Evalua Ya
 
-## Project info
+A web application for evaluating CVs against control interno requirements.
 
-**URL**: https://lovable.dev/projects/0ce6d8b7-af69-4f09-9933-c12011fc2e83
+## Project Structure
 
-## How can I edit this code?
+- `/src` - Frontend React application
+- `/server` - Backend API server using Express and Google Gemini AI
 
-There are several ways of editing your application.
+## Setup
 
-**Use Lovable**
+### Frontend
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0ce6d8b7-af69-4f09-9933-c12011fc2e83) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+1. Install dependencies:
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+npm install
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Create a `.env` file:
 
-# Step 3: Install the necessary dependencies.
-npm i
+```sh
+cp .env.example .env
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Update the API URL in `.env` if needed (default is `http://localhost:3001`)
+
+4. Run the development server:
+
+```sh
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The frontend will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Backend
 
-**Use GitHub Codespaces**
+1. Navigate to the server directory:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
+```sh
+cd server
+```
+
+2. Install dependencies:
+
+```sh
+npm install
+```
+
+3. Create a `.env` file and add your Gemini API key:
+
+```sh
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY
+```
+
+4. Run the development server:
+
+```sh
+npm run dev
+```
+
+The API will be available at `http://localhost:3001`
+
+## Getting a Gemini API Key
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Sign in with your Google account
+3. Create a new API key
+4. Copy the key and add it to `server/.env`
+
+## Running Both Servers
+
+You can run both the frontend and backend simultaneously in separate terminals:
+
+**Terminal 1 (Backend):**
+
+```sh
+cd server
+npm run dev
+```
+
+**Terminal 2 (Frontend):**
+
+```sh
+npm run dev
+```
+
+## Features
+
+- CV upload and processing
+- AI-powered experience extraction
+- Automatic evaluation against control interno requirements
+- Postgraduate relevance scoring
+- Multi-candidate batch processing
+
+## Tech Stack
+
+**Frontend:**
+
+- React + TypeScript
+- Vite
+- TailwindCSS
+- shadcn/ui components
+
+**Backend:**
+
+- Node.js + Express
+- TypeScript
+- Google Gemini AI API
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
 ## What technologies are used for this project?

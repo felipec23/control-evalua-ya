@@ -7,7 +7,10 @@ export const Header = () => {
         <div className="flex items-center gap-3">
           <Shield className="h-8 w-8" />
           <div>
-            <h1 className="text-2xl font-bold">Sistema de Evaluación de Candidatos</h1>
+            <h1 className="text-2xl font-bold">
+              Sistema axiológico de valoración jurídica para elegir al encargado
+              de control interno en las entidades territoriales
+            </h1>
             <p className="text-sm opacity-90">Control Interno Municipal</p>
           </div>
         </div>
