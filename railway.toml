@@ -1,6 +1,9 @@
 [build]
 builder = "RAILPACK"
 
+[build.packageManager]
+name = "npm"
+
 [deploy]
 startCommand = "cd server && npm start"
 workingDirectory = "server"
