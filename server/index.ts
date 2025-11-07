@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { config } from "dotenv";
-import { processCVRoute } from "./routes/process-cv";
+import { processCVRoute } from "./routes/process-cv.js";
 
 // Load environment variables from .env file
 config();
