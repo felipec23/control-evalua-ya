@@ -80,9 +80,6 @@ export const Step1Competency = ({ onNext }: Step1CompetencyProps) => {
                   className="flex-1 cursor-pointer text-sm leading-relaxed"
                 >
                   {option.label}
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    (Puntaje: {option.score})
-                  </span>
                 </Label>
               </div>
             ))}

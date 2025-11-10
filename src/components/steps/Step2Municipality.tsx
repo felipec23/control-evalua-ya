@@ -78,9 +78,6 @@ export const Step2Municipality = ({
                   className="flex-1 cursor-pointer text-sm leading-relaxed"
                 >
                   {category.label}
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    (Experiencia requerida: {category.months} meses)
-                  </span>
                 </Label>
               </div>
             ))}
