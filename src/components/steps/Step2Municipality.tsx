@@ -85,7 +85,12 @@ export const Step2Municipality = ({
         </RadioGroup>
 
         <div className="flex justify-between pt-4">
-          <Button onClick={onBack} variant="outline" size="lg" className="gap-2">
+          <Button
+            onClick={onBack}
+            variant="outline"
+            size="lg"
+            className="gap-2"
+          >
             <ArrowLeft className="h-4 w-4" />
             Atrás
           </Button>
